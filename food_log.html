@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>食事記録ログ</title>
+<style>
+  :root {
+    --green: #2ecc71; --yellow: #f39c12; --red: #e74c3c;
+    --blue: #3498db; --gray: #95a5a6; --dark: #2c3e50;
+    --light: #f8f9fa; --border: #e0e0e0;
+    --target: 1700;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Hiragino Sans", "Meiryo", sans-serif;
+         background: #f0f2f5; color: var(--dark); font-size: 14px; }
+
+  /* ===== ヘッダー ===== */
+  header { background: var(--dark); color: white; padding: 24px 32px; }
+  header h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.05em; }
+  header .sub { color: #adb5bd; margin-top: 4px; font-size: 13px; }
+  .goal-bar { display: flex; gap: 24px; margin-top: 16px; flex-wrap: wrap; }
+  .goal-item { background: rgba(255,255,255,0.08); border-radius: 8px;
+               padding: 10px 16px; font-size: 13px; }
+  .goal-item span { display: block; color: #adb5bd; font-size: 11px; margin-bottom: 2px; }
+  .goal-item strong { font-size: 16px; }
+
+  /* ===== メインレイアウト ===== */
+  main { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+
+  /* ===== 週ラベル ===== */
+  .week-label { font-size: 12px; font-weight: 700; color: var(--gray);
+                letter-spacing: 0.1em; text-transform: uppercase;
+                margin: 24px 0 10px; }
+
+  /* ===== デイカード ===== */
+  .day-card {
+    background: white; border-radius: 12px; margin-bottom: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    overflow: hidden;
+  }
+  .day-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; cursor: pointer;
+    border-bottom: 1px solid transparent;
+    transition: background 0.15s;
+  }
+  .day-header:hover { background: #fafafa; }
+  .day-card.open .day-header { border-bottom-color: var(--border); }
+
+  .date-box { width: 52px; text-align: center; flex-shrink: 0; }
+  .date-box .dow { font-size: 11px; color: var(--gray); font-weight: 600; }
+  .date-box .day { font-size: 22px; font-weight: 700; line-height: 1; }
+  .date-box .mon { font-size: 11px; color: var(--gray); }
+
+  .day-summary { flex: 1; min-width: 0; }
+  .meal-preview { font-size: 13px; color: #555; white-space: nowrap;
+                  overflow: hidden; text-overflow: ellipsis; }
+  .tags { display: flex; gap: 6px; margin-top: 5px; flex-wrap: wrap; }
+  .tag { font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 500; }
+  .tag.exercise { background: #e8f4fd; color: var(--blue); }
+  .tag.drink { background: #fef9e7; color: #b7950b; }
+  .tag.party { background: #f9ebea; color: #922b21; }
+  .tag.norecord { background: #f2f3f4; color: var(--gray); }
+
+  .kcal-block { text-align: right; flex-shrink: 0; min-width: 90px; }
+  .kcal-num { font-size: 18px; font-weight: 700; }
+  .kcal-label { font-size: 10px; color: var(--gray); }
+  .kcal-bar-wrap { height: 4px; background: #eee; border-radius: 2px; margin-top: 4px; }
+  .kcal-bar { height: 4px; border-radius: 2px; transition: width 0.4s; }
+  .kcal-green { color: var(--green); }
+  .kcal-yellow { color: var(--yellow); }
+  .kcal-red { color: var(--red); }
+  .kcal-gray { color: var(--gray); }
+  .bar-green { background: var(--green); }
+  .bar-yellow { background: var(--yellow); }
+  .bar-red { background: var(--red); }
+  .bar-gray { background: var(--gray); }
+
+  .stars { font-size: 12px; margin-left: 4px; }
+
+  /* ===== 詳細パネル ===== */
+  .day-detail { display: none; padding: 14px 16px 16px; }
+  .day-card.open .day-detail { display: block; }
+
+  .meal-table { width: 100%; border-collapse: collapse; }
+  .meal-table td { padding: 6px 8px; vertical-align: top; }
+  .meal-table td:first-child { width: 60px; font-weight: 600; font-size: 12px;
+                                color: var(--gray); white-space: nowrap; }
+  .meal-table tr:not(:last-child) td { border-bottom: 1px solid #f0f0f0; }
+  .kcal-hint { font-size: 11px; color: #aaa; margin-left: 6px; }
+
+  .note-row { margin-top: 10px; font-size: 12px; color: var(--gray);
+              padding-top: 10px; border-top: 1px dashed var(--border); }
+
+  /* ===== サマリー ===== */
+  .summary-card { background: white; border-radius: 12px; padding: 20px 24px;
+                  box-shadow: 0 1px 4px rgba(0,0,0,0.07); margin-top: 24px; }
+  .summary-card h2 { font-size: 14px; font-weight: 700; margin-bottom: 16px;
+                     color: var(--gray); letter-spacing: 0.05em; }
+  .stats-grid { display: flex; gap: 16px; flex-wrap: wrap; }
+  .stat { flex: 1; min-width: 120px; }
+  .stat .label { font-size: 11px; color: var(--gray); margin-bottom: 4px; }
+  .stat .value { font-size: 20px; font-weight: 700; }
+
+  .legend { display: flex; gap: 16px; margin-top: 16px; font-size: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* ===== テンプレート ===== */
+  .template-card { background: var(--dark); color: white; border-radius: 12px;
+                   padding: 20px 24px; margin-top: 16px;
+                   box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+  .template-card h2 { font-size: 14px; font-weight: 700; margin-bottom: 12px; color: #adb5bd; }
+  pre { background: rgba(255,255,255,0.06); border-radius: 8px; padding: 14px;
+        font-family: "SF Mono", "Menlo", monospace; font-size: 13px;
+        line-height: 1.7; white-space: pre-wrap; color: #ecf0f1; }
+
+  /* ===== トレーニングカード ===== */
+  .training-card { background: white; border-radius: 12px; padding: 20px 24px;
+                   box-shadow: 0 1px 4px rgba(0,0,0,0.07); margin-bottom: 24px; }
+  .training-card h2 { font-size: 14px; font-weight: 700; color: var(--gray);
+                      letter-spacing: 0.05em; margin-bottom: 16px; }
+  .week-schedule { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 20px; }
+  .day-col { background: var(--light); border-radius: 8px; padding: 10px 8px; text-align: center; font-size: 12px; }
+  .day-col .dow-label { font-weight: 700; font-size: 11px; color: var(--gray); margin-bottom: 6px; }
+  .day-col .train-type { font-weight: 700; font-size: 12px; margin-bottom: 4px; }
+  .day-col .train-detail { font-size: 11px; color: var(--gray); line-height: 1.4; }
+  .day-col.rest { opacity: 0.5; }
+  .day-col.home { border-top: 3px solid var(--blue); }
+  .day-col.boulder { border-top: 3px solid #9b59b6; }
+  .day-col.cardio { border-top: 3px solid var(--green); }
+  .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .menu-block { background: var(--light); border-radius: 8px; padding: 12px 14px; }
+  .menu-block h3 { font-size: 12px; font-weight: 700; margin-bottom: 8px; color: var(--dark); }
+  .menu-block ol { padding-left: 16px; font-size: 12px; line-height: 1.8; color: #444; }
+
+  @media (max-width: 600px) {
+    .week-schedule { grid-template-columns: repeat(4, 1fr); }
+    .menu-grid { grid-template-columns: 1fr; }
+  }
+    header { padding: 16px; }
+    .kcal-num { font-size: 15px; }
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<header>
+  <h1>💪 ボディリコンプ記録ログ</h1>
+  <div class="sub">減量フェーズ完了（4/4〜4/29）→ リコンプフェーズ開始（4/29〜）</div>
+  <div class="goal-bar">
+    <div class="goal-item"><span>達成体重</span><strong style="color:#2ecc71">✅ 69 kg</strong></div>
+    <div class="goal-item"><span>維持目標</span><strong>69 kg キープ</strong></div>
+    <div class="goal-item"><span>目標カロリー</span><strong>〜1,900 kcal/日</strong></div>
+    <div class="goal-item"><span>タンパク質目標</span><strong>120 g/日</strong></div>
+  </div>
+</header>
+
+<main>
+
+<!-- ===== カロリー推移グラフ ===== -->
+<div class="summary-card" style="margin-bottom:24px">
+  <h2 style="margin-bottom:16px">📈 摂取カロリー推移</h2>
+  <canvas id="kcalChart" style="max-height:280px"></canvas>
+  <div style="display:flex;gap:16px;margin-top:12px;font-size:12px;color:#555;flex-wrap:wrap">
+    <span><span style="display:inline-block;width:12px;height:12px;background:rgba(46,204,113,0.8);border-radius:2px;margin-right:4px"></span>目標内（〜1,700kcal）</span>
+    <span><span style="display:inline-block;width:12px;height:12px;background:rgba(231,76,60,0.8);border-radius:2px;margin-right:4px"></span>超過（1,700kcal超）</span>
+    <span><span style="display:inline-block;width:12px;height:12px;background:rgba(149,165,166,0.5);border-radius:2px;margin-right:4px"></span>記録なし／途中</span>
+  </div>
+</div>
+<script>
+(function(){
+  const labels = ['4/04','4/05','4/06','4/07','4/08','4/09','4/10','4/11','4/12','4/13','4/14','4/15','4/16','4/17','4/18','4/19','4/20','4/21','4/22','4/23','4/24','4/25','4/26','4/27','4/28','4/29'];
+  const values = [1020, null, 1540, 1200, 970, 950, 1390, 1940, 1000, 1520, 1690, 1430, 1060, 1220, 1100, 1045, 1630, 1470, 1430, 1850, 1650, 1690, 980, 899, null, 802];
+  const bgColors = values.map(v =>
+    v === null ? 'rgba(149,165,166,0.4)' : v > 1700 ? 'rgba(231,76,60,0.75)' : 'rgba(46,204,113,0.75)'
+  );
+  const target = new Array(labels.length).fill(1700);
+
+  new Chart(document.getElementById('kcalChart'), {
+    data: {
+      labels,
+      datasets: [
+        {
+          type: 'bar',
+          label: '摂取カロリー',
+          data: values,
+          backgroundColor: bgColors,
+          borderRadius: 4,
+          order: 2
+        },
+        {
+          type: 'line',
+          label: '目標 1,700kcal',
+          data: target,
+          borderColor: '#f39c12',
+          borderWidth: 2,
+          borderDash: [6,3],
+          pointRadius: 0,
+          fill: false,
+          order: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: true,
+          labels: { filter: item => item.text !== '摂取カロリー', font: { size: 12 } }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => ctx.dataset.type === 'bar'
+              ? (ctx.raw !== null ? ctx.raw + ' kcal' : '記録なし')
+              : '目標 1,700 kcal'
+          }
+        }
+      },
+      scales: {
+        y: {
+          min: 600, max: 2200,
+          ticks: { callback: v => v.toLocaleString() + ' kcal', font: { size: 11 } },
+          grid: { color: '#f0f2f5' }
+        },
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+})();
+</script>
+
+<!-- ===== 体重推移グラフ ===== -->
+<div class="summary-card" style="margin-bottom:24px">
+  <h2 style="margin-bottom:16px">⚖️ 体重推移</h2>
+  <canvas id="weightChart" style="max-height:260px"></canvas>
+</div>
+<script>
+(function(){
+  const labels = ['4/04','4/05','4/06','4/07','4/08','4/09','4/10','4/11','4/12','4/13','4/14','4/15','4/16','4/17','4/18','4/19','4/20','4/21','4/22','4/23','4/24','4/25','4/26','4/27','4/28','4/29'];
+  const weights = [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,70.0,70.4,null,null,null,null,70.4,null,null,69.4,69.0];
+  const target = new Array(labels.length).fill(69.0);
+
+  new Chart(document.getElementById('weightChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: '体重 (kg)',
+          data: weights,
+          borderColor: '#3498db',
+          backgroundColor: 'rgba(52,152,219,0.1)',
+          borderWidth: 2.5,
+          pointRadius: weights.map(v => v !== null ? 5 : 0),
+          pointBackgroundColor: weights.map(v => {
+            if (v === null) return 'transparent';
+            return v <= 69.0 ? '#2ecc71' : v <= 70.0 ? '#f39c12' : '#e74c3c';
+          }),
+          pointBorderColor: 'white',
+          pointBorderWidth: 2,
+          spanGaps: true,
+          fill: true,
+          tension: 0.3
+        },
+        {
+          label: '目標 69.0kg',
+          data: target,
+          borderColor: '#2ecc71',
+          borderWidth: 2,
+          borderDash: [6,3],
+          pointRadius: 0,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: true, labels: { font: { size: 12 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => ctx.raw !== null ? ctx.raw + ' kg' : '未計測'
+          }
+        }
+      },
+      scales: {
+        y: {
+          min: 68.5, max: 71.5,
+          ticks: { callback: v => v.toFixed(1) + ' kg', font: { size: 11 } },
+          grid: { color: '#f0f2f5' }
+        },
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+})();
+</script>
+
+<!-- ===== トレーニングテンプレート ===== -->
+<div class="training-card">
+  <h2>🏋️ 週間トレーニングテンプレート（リコンプフェーズ）</h2>
+  <div class="week-schedule">
+    <div class="day-col home">
+      <div class="dow-label">月</div>
+      <div class="train-type" style="color:#3498db">自宅 A</div>
+      <div class="train-detail">胸・肩・腹</div>
+    </div>
+    <div class="day-col cardio">
+      <div class="dow-label">火</div>
+      <div class="train-type" style="color:#2ecc71">ラン</div>
+      <div class="train-detail">20〜30分 軽め</div>
+    </div>
+    <div class="day-col boulder">
+      <div class="dow-label">水</div>
+      <div class="train-type" style="color:#9b59b6">ボルダリング</div>
+      <div class="train-detail">行ける時 / 休み</div>
+    </div>
+    <div class="day-col home">
+      <div class="dow-label">木</div>
+      <div class="train-type" style="color:#3498db">自宅 B</div>
+      <div class="train-detail">体幹・下半身</div>
+    </div>
+    <div class="day-col rest">
+      <div class="dow-label">金</div>
+      <div class="train-type">休み</div>
+      <div class="train-detail">or 軽いラン</div>
+    </div>
+    <div class="day-col boulder">
+      <div class="dow-label">土</div>
+      <div class="train-type" style="color:#9b59b6">ボルダリング</div>
+      <div class="train-detail">or 自宅 A</div>
+    </div>
+    <div class="day-col rest">
+      <div class="dow-label">日</div>
+      <div class="train-type">完全休養</div>
+      <div class="train-detail">回復優先</div>
+    </div>
+  </div>
+  <div class="menu-grid">
+    <div class="menu-block">
+      <h3>🔵 自宅トレ A（胸・肩・腹）約25分</h3>
+      <ol>
+        <li>プッシュアップ　3×10〜15回</li>
+        <li>ワイドプッシュアップ　3×10回</li>
+        <li>パイクプッシュアップ（肩）　3×8〜10回</li>
+        <li>腹筋ローラー　3×8〜10回</li>
+      </ol>
+    </div>
+    <div class="menu-block">
+      <h3>🔵 自宅トレ B（体幹・下半身）約25分</h3>
+      <ol>
+        <li>腹筋ローラー　3×10回</li>
+        <li>プランク　3×45秒</li>
+        <li>スクワット　3×15回</li>
+        <li>ランジ（左右）　3×10回</li>
+      </ol>
+    </div>
+  </div>
+  <p style="font-size:12px;color:var(--gray);margin-top:12px">
+    💡 背中・二頭筋はボルダリングでカバー。回数より<strong>フォーム</strong>優先。慣れたら回数・セット数を増やして負荷を上げていく。
+  </p>
+</div>
+
+<!-- ===== WEEK 1 ===== -->
+<div class="week-label">Week 1 &nbsp;4/4 – 4/10</div>
+
+<!-- 4/04 -->
+<div class="day-card" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">SAT</div><div class="day">4</div><div class="mon">APR</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝: 鶏むね100g+サラダ　昼: おにぎり大　夜: 鶏むね120g+具沢山味噌汁</div>
+      <div class="tags"><span class="tag exercise">HIIT</span></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-green">〜1,020<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定摂取カロリー</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-green" style="width:60%"></div></div>
+    </div>
+    <span class="stars">⭐⭐⭐⭐</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>朝</td><td>鶏むね100g＋サラダ100g<span class="kcal-hint">約123kcal</span></td></tr>
+      <tr><td>昼</td><td>おにぎり大（ファミマ）<span class="kcal-hint">約220kcal</span></td></tr>
+      <tr><td>間食</td><td>プロテイン1杯・ウィダー×2<span class="kcal-hint">約390kcal</span></td></tr>
+      <tr><td>夜</td><td>具沢山味噌汁＋ご飯半分＋鶏むね120g<span class="kcal-hint">約380kcal</span></td></tr>
+    </table>
+    <div class="note-row">🏋️ HIIT実施　／　記録開始日</div>
+  </div>
+</div>
+
+<!-- 4/05 -->
+<div class="day-card" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">SUN</div><div class="day">5</div><div class="mon">APR</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">食事記録なし（翌日の計画のみ）</div>
+      <div class="tags"><span class="tag norecord">記録なし</span></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-gray">—</div>
+      <div class="kcal-label">推定摂取カロリー</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-gray" style="width:5%"></div></div>
+    </div>
+    <span class="stars">—</span>
+  </div>
+  <div class="day-detail">
+    <div class="note-row">前日HIIT・腕立て・腹筋ローラーによる筋肉痛。翌日スケジュール計画のみ。食事内容はChatGPTに未報告。</div>
+  </div>
+</div>
+
+<!-- 4/06 -->
+<div class="day-card" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">MON</div><div class="day">6</div><div class="mon">APR</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝: 鶏むね75g　昼: 大戸屋 鯖定食　夜: 豆乳キムチスープ+鶏むね</div>
+      <div class="tags"><span class="tag exercise">3kmラン</span></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-green">〜1,540<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定摂取カロリー</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-green" style="width:91%"></div></div>
+    </div>
+    <span class="stars">⭐⭐⭐⭐⭐</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>朝</td><td>鶏むね75g＋シーチキンおにぎり<span class="kcal-hint">約300kcal</span></td></tr>
+      <tr><td>昼</td><td>大戸屋：鯖の炭火焼き定食（五穀米・普通量）<span class="kcal-hint">約750kcal</span></td></tr>
+      <tr><td>夜</td><td>豆乳キムチスープ＋鶏むね50g＋ゆで卵2個＋ご飯半分<span class="kcal-hint">約490kcal</span></td></tr>
+    </table>
+    <div class="note-row">🏃 3kmラン（20分）</div>
+  </div>
+</div>
+
+<!-- 4/07 -->
+<div class="day-card" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">TUE</div><div class="day">7</div><div class="mon">APR</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝: オートミール+バナナ+ゆで卵　昼: セブン　夜: ミネストローネ+鶏むね</div>
+      <div class="tags"><span class="tag exercise">10分ウォーク</span></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-yellow">〜1,200<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定摂取カロリー</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-yellow" style="width:70%"></div></div>
+    </div>
+    <span class="stars">⭐⭐⭐⭐⭐</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>朝</td><td>オートミール30g＋牛乳60g＋バナナ＋オレンジ2切れ＋ゆで卵<span class="kcal-hint">約355kcal</span></td></tr>
+      <tr><td>昼</td><td>セブン：サラダチキン＋おにぎり1個＋サラダ<span class="kcal-hint">約345kcal</span></td></tr>
+      <tr><td>間食</td><td>プロテインバー<span class="kcal-hint">約200kcal</span></td></tr>
+      <tr><td>夜</td><td>ミネストローネ＋ゆで卵2個＋鶏むね30g＋オレンジ2切れ<span class="kcal-hint">約300kcal</span></td></tr>
+    </table>
+    <div class="note-row">⚠️ 1,200kcalはやや少なめ。極端に少ない日が続くと筋肉が落ちやすいので注意。</div>
+  </div>
+</div>
+
+<!-- 4/08 -->
+<div class="day-card" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">WED</div><div class="day">8</div><div class="mon">APR</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝: オートミール+バナナ　昼: コンビニ鶏むねサラダ　夜: 未報告</div>
+      <div class="tags"><span class="tag exercise">HIIT</span></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-yellow">〜970+α<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定摂取カロリー</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-yellow" style="width:57%"></div></div>
+    </div>
+    <span class="stars">⭐⭐⭐</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>朝</td><td>オートミール＋バナナ<span class="kcal-hint">約204kcal</span></td></tr>
+      <tr><td>昼</td><td>コンビニ：鶏むね＋ゆで卵サラダ＋おにぎり<span class="kcal-hint">約445kcal</span></td></tr>
+      <tr><td>間食</td><td>プロテイン1杯＋プロテインバー<span class="kcal-hint">約320kcal</span></td></tr>
+      <tr><td>夜</td><td>未報告<span class="kcal-hint">—</span></td></tr>
+    </table>
+    <div class="note-row">🏋️ HIIT実施　／　夕食未記録のため実際のカロリーは不明</div>
+  </div>
+</div>
+
+<!-- 4/09 -->
+<div class="day-card" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">THU</div><div class="day">9</div><div class="mon">APR</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝: ご飯　昼: 納豆+卵+鶏むね80g+ご飯　夜: 外食+焼酎3杯</div>
+      <div class="tags"><span class="tag exercise">10分ウォーク</span><span class="tag drink">飲み</span></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-yellow">〜950+α<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定摂取カロリー</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-yellow" style="width:56%"></div></div>
+    </div>
+    <span class="stars">⭐⭐⭐</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>朝</td><td>ご飯（早め）<span class="kcal-hint">約200kcal</span></td></tr>
+      <tr><td>昼</td><td>納豆＋卵＋鶏むね80g＋ご飯110g<span class="kcal-hint">約451kcal</span></td></tr>
+      <tr><td>間食</td><td>プロテイン1杯<span class="kcal-hint">約120kcal</span></td></tr>
+      <tr><td>夜</td><td>外食（内容不明）＋焼酎ソーダ3杯<span class="kcal-hint">焼酎のみ約180kcal</span></td></tr>
+    </table>
+    <div class="note-row">🚶 10分ウォーキング　／　夜の外食内容未記録</div>
+  </div>
+</div>
+
+<!-- 4/10 -->
+<div class="day-card" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">FRI</div><div class="day">10</div><div class="mon">APR</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">昼: 焼き鯖定食　夜: ご飯120g+刺身9切れ</div>
+      <div class="tags"><span class="tag exercise">10kmラン</span></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-green">〜1,390<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定摂取カロリー</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-green" style="width:82%"></div></div>
+    </div>
+    <span class="stars">⭐⭐⭐⭐</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>朝</td><td>—</td></tr>
+      <tr><td>昼</td><td>焼き鯖定食（ご飯・味噌汁・明太子・漬物）<span class="kcal-hint">約680kcal</span></td></tr>
+      <tr><td>間食</td><td>プロテインバー＋ウィダーゼリー（ラン後）<span class="kcal-hint">約330kcal</span></td></tr>
+      <tr><td>夜</td><td>ご飯120g＋刺身9切れ<span class="kcal-hint">約380kcal</span></td></tr>
+    </table>
+    <div class="note-row">🏃 10kmラン（消費カロリー約500-600kcal）　＋　翌朝に夜食内容報告</div>
+  </div>
+</div>
+
+<!-- ===== WEEK 2 ===== -->
+<div class="week-label">Week 2 &nbsp;4/11 – 4/19</div>
+
+<!-- 4/11 -->
+<div class="day-card" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">SAT</div><div class="day">11</div><div class="mon">APR</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝: 鶏むね130g+卵+味噌汁　昼: ブロンコビリー　夜: ハツ300g+米90g</div>
+      <div class="tags"><span class="tag party">外食2回</span></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-red">〜1,940<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定摂取カロリー</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-red" style="width:100%"></div></div>
+    </div>
+    <span class="stars">⭐⭐⭐⭐</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>朝</td><td>ご飯50g＋鶏むね130g＋卵＋豆腐・にんじん・玉ねぎの味噌汁<span class="kcal-hint">約390kcal</span></td></tr>
+      <tr><td>昼</td><td>ブロンコビリー：がんこハンバーグ300g＋ご飯小＋サラダバー<span class="kcal-hint">約950kcal</span></td></tr>
+      <tr><td>夜</td><td>松屋：牛丼並盛ご飯少なめ＋サラダ<span class="kcal-hint">約560kcal</span></td></tr>
+    </table>
+    <div class="note-row">外食2回の日。牛丼ご飯少なめ＋サラダで調整できている。</div>
+    </table>
+    <div class="note-row">外食2回でカロリー高め。ただし内容はタンパク質中心で及第点。</div>
+  </div>
+</div>
+
+<!-- 4/12 -->
+<div class="day-card" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">SUN</div><div class="day">12</div><div class="mon">APR</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝: 鶏むね140g+味噌汁　昼: ホームパーティー　夜: 未報告</div>
+      <div class="tags"><span class="tag exercise">5kmラン</span><span class="tag party">ホームパーティ</span></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-yellow">〜1,000+α<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定摂取カロリー</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-yellow" style="width:59%"></div></div>
+    </div>
+    <span class="stars">⭐⭐⭐</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>朝</td><td>鶏むね140g＋味噌汁（オートミール10g入り）<span class="kcal-hint">約270kcal</span></td></tr>
+      <tr><td>昼</td><td>ホームパーティー：たこ焼き＋サラダ＋キャロットラペ＋どら焼き<span class="kcal-hint">約730kcal</span></td></tr>
+      <tr><td>夜</td><td>未報告<span class="kcal-hint">—</span></td></tr>
+    </table>
+    <div class="note-row">🏃 5kmラン　／　夕食未記録</div>
+  </div>
+</div>
+
+<!-- 4/13 -->
+<div class="day-card" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">MON</div><div class="day">13</div><div class="mon">APR</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝: ヨーグルト+オートミール　昼: 鶏むねサラダ+おにぎり　夜: 豚タン150g</div>
+      <div class="tags"></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-green">〜1,520<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定摂取カロリー</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-green" style="width:89%"></div></div>
+    </div>
+    <span class="stars">⭐⭐⭐⭐</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>朝</td><td>プロテイン＋バナナ／ヨーグルト90g＋オートミール20g<span class="kcal-hint">約350kcal</span></td></tr>
+      <tr><td>昼</td><td>鶏むね＋ゆで卵サラダ＋おにぎり（大）<span class="kcal-hint">約495kcal</span></td></tr>
+      <tr><td>夜</td><td>夕方プロテインバー＋豚タン150g＋オートミール20g＋味噌汁<span class="kcal-hint">約680kcal</span></td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 4/14 -->
+<div class="day-card" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">TUE</div><div class="day">14</div><div class="mon">APR</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝: オートミール+鶏むね80g　昼: おにぎり+サラダチキン　夜: 豚タン150g</div>
+      <div class="tags"></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-green">〜1,690<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定摂取カロリー</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-green" style="width:99%"></div></div>
+    </div>
+    <span class="stars">⭐⭐⭐⭐</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>朝</td><td>オートミール20g＋バナナ＋鶏むね80g<span class="kcal-hint">約252kcal</span></td></tr>
+      <tr><td>昼</td><td>おにぎり＋サラダチキン＋具沢山味噌汁<span class="kcal-hint">約375kcal</span></td></tr>
+      <tr><td>間食</td><td>オイコス＋クッキー1枚＋ピーナッツ小袋<span class="kcal-hint">約380kcal</span></td></tr>
+      <tr><td>夜</td><td>豚タン150g＋ご飯100g＋卵＋野菜味噌汁<span class="kcal-hint">約680kcal</span></td></tr>
+    </table>
+    <div class="note-row">間食でクッキー＋ピーナッツが入っているが、他が良いので問題なし。</div>
+  </div>
+</div>
+
+<!-- 4/15 -->
+<div class="day-card" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">WED</div><div class="day">15</div><div class="mon">APR</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝: 鶏むね100g+納豆+ご飯50g　昼: スープ+パン　夜: 焼き鳥飲み会</div>
+      <div class="tags"><span class="tag drink">飲み会（焼き鳥）</span></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-green">〜1,430<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定摂取カロリー</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-green" style="width:84%"></div></div>
+    </div>
+    <span class="stars">⭐⭐⭐</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>朝</td><td>鶏むね100g＋卵＋納豆＋ご飯50g＋味噌汁<span class="kcal-hint">約422kcal</span></td></tr>
+      <tr><td>昼</td><td>スープストック：スープ2種＋パン<span class="kcal-hint">約310kcal</span></td></tr>
+      <tr><td>夜</td><td>焼き鳥屋（飲み会）＋ハイボール<span class="kcal-hint">約700kcal（推定）</span></td></tr>
+    </table>
+    <div class="note-row">昼を軽めに抑えて飲み会に備えた。良い調整。</div>
+  </div>
+</div>
+
+<!-- 4/16 -->
+<div class="day-card" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">THU</div><div class="day">16</div><div class="mon">APR</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝昼: 和食弁当　夜: 魚介居酒屋（魚中心）＋ハイボール　間食なし</div>
+      <div class="tags"><span class="tag drink">外食・飲み</span></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-green">〜1,060<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定摂取カロリー</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-green" style="width:62%"></div></div>
+    </div>
+    <span class="stars">⭐⭐⭐⭐</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>朝昼</td><td>和食弁当<span class="kcal-hint">約600kcal</span></td></tr>
+      <tr><td>夜</td><td>魚介居酒屋：魚中心のごはん＋ハイボール<span class="kcal-hint">約460kcal</span></td></tr>
+      <tr><td>間食</td><td>なし<span class="kcal-hint">0kcal</span></td></tr>
+    </table>
+    <div class="note-row">翌朝に事後報告。「割とセーブできた」とのこと。間食なし◎</div>
+  </div>
+</div>
+
+<!-- 4/17 -->
+<div class="day-card" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">FRI</div><div class="day">17</div><div class="mon">APR</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝: 鶏むね50g+納豆+卵+どら焼き　夜: エビチャーハン（18時）</div>
+      <div class="tags"></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-green">〜1,220<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定摂取カロリー</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-green" style="width:72%"></div></div>
+    </div>
+    <span class="stars">⭐⭐</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>朝</td><td>鶏むね50g＋納豆＋卵＋どら焼き1個<span class="kcal-hint">約434kcal</span></td></tr>
+      <tr><td>間食</td><td>ヨーグルト<span class="kcal-hint">約63kcal</span></td></tr>
+      <tr><td>夜</td><td>エビチャーハン（18時）＋寝る前プロテイン<span class="kcal-hint">約720kcal</span></td></tr>
+    </table>
+    <div class="note-row">18時に食べたのでカロリーの蓄積はしにくい。チャーハンは炭水化物多め。どら焼きは次回は別のものを。</div>
+  </div>
+</div>
+
+<!-- 4/18 -->
+<div class="day-card" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">SAT</div><div class="day">18</div><div class="mon">APR</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝昼: カフェサラダ　夜: 同窓会（サラダ・チキン・刺身）＋〆ラーメン</div>
+      <div class="tags"><span class="tag party">同窓会</span></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-green">〜1,100<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定摂取カロリー</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-green" style="width:65%"></div></div>
+    </div>
+    <span class="stars">⭐⭐⭐⭐</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>朝昼</td><td>カフェ：サラダ<span class="kcal-hint">約150kcal</span></td></tr>
+      <tr><td>夜</td><td>同窓会立食：サラダ＋チキン＋刺身<span class="kcal-hint">約450kcal</span></td></tr>
+      <tr><td></td><td>〆ラーメン1杯<span class="kcal-hint">約500kcal</span></td></tr>
+    </table>
+    <div class="note-row">同窓会で魚・チキン中心にセーブ。〆ラーメンは誤差レベル（前後が優秀）。</div>
+  </div>
+</div>
+
+<!-- 4/19 -->
+<div class="day-card" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box" style="position:relative">
+      <div class="dow">SUN</div><div class="day">19</div><div class="mon">APR</div>
+      <span style="display:block;font-size:11px;color:var(--green);font-weight:700;margin-top:2px;">70.0kg</span>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝: おにぎり+オートミール　昼: レタス+鶏むね300g　夜: ハツ300g+米90g</div>
+      <div class="tags"><span class="tag" style="background:#e8f8f5;color:#1e8449;">TODAY</span></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-green">〜1,045<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定摂取カロリー</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-green" style="width:61%"></div></div>
+    </div>
+    <span class="stars">⭐⭐⭐⭐⭐</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>朝</td><td>おにぎり1個＋オートミール20g<span class="kcal-hint">約256kcal</span></td></tr>
+      <tr><td>昼</td><td>レタス＋鶏むね肉300g（焼き）<span class="kcal-hint">約339kcal</span></td></tr>
+      <tr><td>夜</td><td>ハツ（牛心臓）300g焼き＋米90g<span class="kcal-hint">約450kcal</span></td></tr>
+    </table>
+    <div class="note-row">🔥 ハツは低脂肪・高タンパク質（100gあたり100kcal＋タンパク質19g）。この食事構成は完璧に近い。<br>⭐ 体重: 70.0kg（開始71kg → -1kg達成！）</div>
+  </div>
+</div>
+
+<!-- ===== WEEK 3 ===== -->
+<div class="week-label">Week 3 &nbsp;4/20〜</div>
+
+<!-- 4/20 -->
+<div class="day-card open" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">MON</div><div class="day">20</div><div class="mon">APR</div>
+      <span style="display:block;font-size:11px;color:var(--yellow);font-weight:700;margin-top:2px;">70.4kg</span>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝: オイコス+ドライフルーツ+ナッツ　昼: おにぎり+鶏胸肉卵サラダ　夜: 焼き鳥丼+サラダ</div>
+      <div class="tags"><span class="tag exercise">ボルダリング</span><span class="tag" style="background:#e8f8f5;color:#1e8449;">TODAY</span></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-green">〜1,630<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定摂取カロリー</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-green" style="width:96%"></div></div>
+    </div>
+    <span class="stars">⭐⭐⭐⭐</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>朝</td><td>オイコス＋ドライフルーツ＋ナッツ<span class="kcal-hint">約320kcal</span></td></tr>
+      <tr><td>昼</td><td>大きめおにぎり1個＋鶏胸肉と卵のサラダ<span class="kcal-hint">約428kcal</span></td></tr>
+      <tr><td>間食</td><td>プロテインバー<span class="kcal-hint">約200kcal</span></td></tr>
+      <tr><td>夜</td><td>焼き鳥丼＋サラダ<span class="kcal-hint">約680kcal</span></td></tr>
+    </table>
+    <div class="note-row">🧗 ボルダリング（消費カロリー約400〜600kcal）で実質大幅プラス。体重70.4kgは前日比+0.4kgだが日内変動の範囲内。</div>
+  </div>
+</div>
+
+<!-- 4/21 -->
+<div class="day-card open" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">TUE</div><div class="day">21</div><div class="mon">APR</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝: なし（健康診断）　昼: 御膳　夜: 寿司15貫</div>
+      <div class="tags"><span class="tag norecord">健康診断</span></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-green">〜1,470<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定摂取カロリー</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-green" style="width:75%"></div></div>
+    </div>
+    <span class="stars">⭐⭐⭐</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>朝</td><td>なし（健康診断のため）<span class="kcal-hint">0kcal</span></td></tr>
+      <tr><td>昼</td><td>御膳<span class="kcal-hint">720kcal（実測）</span></td></tr>
+      <tr><td>間食</td><td>プロテインバー<span class="kcal-hint">約200kcal</span></td></tr>
+      <tr><td>夜</td><td>寿司15貫<span class="kcal-hint">約550kcal</span></td></tr>
+    </table>
+    <div class="note-row">健康診断で朝食抜き。寿司は低脂肪・高タンパクで夜食としてかなり優秀。</div>
+  </div>
+</div>
+
+<!-- 4/22 -->
+<div class="day-card open" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">WED</div><div class="day">22</div><div class="mon">APR</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝: スタバ ヨーグルト&バナナグラノーラ　昼: 寿司12貫　夜: すき家ミニ牛丼</div>
+      <div class="tags"><span class="tag norecord">富山出張</span></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-green">〜1,430<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定摂取カロリー</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-green" style="width:84%"></div></div>
+    </div>
+    <span class="stars">⭐⭐⭐⭐</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>朝</td><td>スタバ：ヨーグルト＆バナナグラノーラ<span class="kcal-hint">192kcal</span></td></tr>
+      <tr><td>昼</td><td>寿司12貫<span class="kcal-hint">約420kcal</span></td></tr>
+      <tr><td>間食</td><td>プロテインバー<span class="kcal-hint">約200kcal</span></td></tr>
+      <tr><td>夜</td><td>すき家：ミニ牛丼＋サラダ＋味噌汁＋卵<span class="kcal-hint">約620kcal</span></td></tr>
+    </table>
+    <div class="note-row">🗾 富山出張中。魚中心＋ミニ牛丼でカロリーをうまくコントロール。出張中としてかなり優秀。</div>
+  </div>
+</div>
+
+<!-- 4/23 -->
+<div class="day-card open" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">THU</div><div class="day">23</div><div class="mon">APR</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝: セブン ウィダー+おにぎり+サラダチキン　昼: 焼き鳥丼　夜: 大戸屋 焼き鳥丼定食</div>
+      <div class="tags"><span class="tag" style="background:#e8f8f5;color:#1e8449;">TODAY</span><span class="tag norecord">出張中</span></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-yellow">〜1,850<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-yellow" style="width:93%"></div></div>
+    </div>
+    <span class="stars">⭐⭐⭐</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>朝</td><td>セブン：ウィダープロテイン（35kcal/P5g）＋おにぎり＋サラダチキンバー（63kcal/P13.6g）＋チョレギサラダ<span class="kcal-hint">約408kcal</span></td></tr>
+      <tr><td>昼</td><td>焼き鳥屋：焼き鳥丼<span class="kcal-hint">約650kcal</span></td></tr>
+      <tr><td>夜</td><td>大戸屋：焼き鳥丼定食<span class="kcal-hint">約800kcal</span></td></tr>
+    </table>
+    <div class="note-row">出張中でも鶏肉中心でタンパク質確保◎　焼き鳥丼×2は炭水化物多め、野菜が少ない日。</div>
+  </div>
+</div>
+
+<!-- 4/24 -->
+<div class="day-card" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">FRI</div><div class="day">24</div><div class="mon">APR</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝: オイコス　昼: ハンバーグ定食　夜: 焼き鳥屋コース</div>
+      <div class="tags"><span class="tag exercise">3kmラン＋3kmウォーク</span></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-yellow">〜1,650<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-yellow" style="width:83%"></div></div>
+    </div>
+    <span class="stars">⭐⭐⭐⭐</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>朝</td><td>オイコス<span class="kcal-hint">約100kcal</span></td></tr>
+      <tr><td>昼</td><td>ハンバーグ定食<span class="kcal-hint">約750kcal</span></td></tr>
+      <tr><td>夜</td><td>焼き鳥屋コース<span class="kcal-hint">約800kcal</span></td></tr>
+    </table>
+    <div class="note-row">運動量多め（計6km）でカロリー消費◎　朝が軽めなので1日トータルはバランス良し。</div>
+  </div>
+</div>
+
+<!-- 4/25 -->
+<div class="day-card" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">SAT</div><div class="day">25</div><div class="mon">APR</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝: バナナパンケーキ　昼: ささみカツ定食　夜: 鶏ひき肉＋鯖缶納豆油揚げ焼き</div>
+      <div class="tags"><span class="tag weight">70.4kg</span></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-yellow">〜1,690<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-yellow" style="width:85%"></div></div>
+    </div>
+    <span class="stars">⭐⭐⭐⭐</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>朝</td><td>バナナパンケーキ<span class="kcal-hint">約350kcal</span></td></tr>
+      <tr><td>昼</td><td>ささみカツ定食<span class="kcal-hint">約700kcal</span></td></tr>
+      <tr><td>夜</td><td>鶏ひき肉200g＋もやしレンチン／鯖缶＋納豆の油揚げ焼き<span class="kcal-hint">約640kcal</span></td></tr>
+    </table>
+    <div class="note-row">夜の手料理が優秀：高タンパク×低カロリー。鯖缶+納豆+油揚げはオメガ3・発酵食品・植物性タンパクの三重◎</div>
+  </div>
+</div>
+
+<!-- 4/26 -->
+<div class="day-card" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">SUN</div><div class="day">26</div><div class="mon">APR</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝: 卵おじや　昼: 春雨豆乳スープ　夜: 味噌汁＋梅干し＋明太子</div>
+      <div class="tags"><span class="tag exercise">軽いラン5〜10分</span></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-green">〜980<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-green" style="width:49%"></div></div>
+    </div>
+    <span class="stars">⭐⭐⭐⭐⭐</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>朝</td><td>卵おじや<span class="kcal-hint">約280kcal</span></td></tr>
+      <tr><td>昼</td><td>春雨30g＋豆乳ベーススープ（えび・ほうれん草・ブロッコリー・しめじ）<span class="kcal-hint">約250kcal</span></td></tr>
+      <tr><td>間食</td><td>プロテインバー<span class="kcal-hint">約200kcal</span></td></tr>
+      <tr><td>夜</td><td>味噌汁（豆腐・しめじ・もやし・餃子の皮）＋梅干し＋明太子<span class="kcal-hint">約250kcal</span></td></tr>
+    </table>
+    <div class="note-row">約980kcalと今月最少クラス。食材がすべてヘルシー、胃腸に優しいリセット日◎</div>
+  </div>
+</div>
+
+<!-- 4/27 -->
+<div class="day-card open" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">MON</div><div class="day">27</div><div class="mon">APR</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝: 出汁茶漬け　昼: ローソン鶏むね肉サラダ＋おにぎり　間: かけうどん　夜: 記録待ち</div>
+      <div class="tags"></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-green">〜899+<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定（夜待ち）</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-green" style="width:45%"></div></div>
+    </div>
+    <span class="stars">記録中</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>朝</td><td>出汁茶漬け（ごはん110g・明太子・大葉・ごま・レモン）<span class="kcal-hint">約220kcal</span></td></tr>
+      <tr><td>昼</td><td>ローソン：鶏むね肉サラダ（206kcal/P23.1g）＋胡麻さけおにぎり（183kcal/P5.1g）<span class="kcal-hint">389kcal</span></td></tr>
+      <tr><td>間食</td><td>かけうどん並＋1本満足バー プロテイン<span class="kcal-hint">約475kcal</span></td></tr>
+      <tr><td>夜</td><td>—（記録待ち）</td></tr>
+    </table>
+    <div class="note-row">昼のP23.1gが優秀。間食のうどんで炭水化物多めになったが夜で調整できる。</div>
+  </div>
+</div>
+
+<!-- 4/28 -->
+<div class="day-card open" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">TUE</div><div class="day">28</div><div class="mon">APR</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝: 卵かけご飯＋プロテイン　昼: 出汁茶漬け＋ローソンサラダ　間: かけうどん　夜: 記録待ち</div>
+      <div class="tags"><span class="tag" style="background:#e8f8f5;color:#1e8449;">TODAY</span><span class="tag weight">69.4kg</span></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-green">〜1,443+<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定（夜待ち）</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-green" style="width:72%"></div></div>
+    </div>
+    <span class="stars">記録中</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>起床</td><td>5:24</td></tr>
+      <tr><td>体重</td><td>69.4kg（水分・プロテイン後）</td></tr>
+      <tr><td>朝</td><td>卵かけご飯＋プロテイン<span class="kcal-hint">約385kcal</span></td></tr>
+      <tr><td>昼</td><td>出汁茶漬け（ごはん110g）＋ローソン：鶏むね肉サラダ（206kcal/P23.1g）<span class="kcal-hint">約391kcal</span></td></tr>
+      <tr><td>間食</td><td>かけうどん並＋プロテインバー＋フルーツ＆ナッツ（192kcal/P4.5g）<span class="kcal-hint">約667kcal</span></td></tr>
+      <tr><td>夜</td><td>—（記録待ち）</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 4/29 -->
+<div class="day-card open" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">WED</div><div class="day">29</div><div class="mon">APR</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝: VALXプロテイン＋出汁茶漬け＋納豆　昼: 卵かけご飯　夜: 記録待ち</div>
+      <div class="tags"><span class="tag" style="background:#e8f8f5;color:#1e8449;">TODAY</span><span class="tag weight" style="background:#fff3cd;color:#856404;font-weight:700">🎯 69.0kg 目標達成！</span></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-green">〜802+<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定（夜待ち）</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-green" style="width:42%"></div></div>
+    </div>
+    <span class="stars">記録中</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>体重</td><td style="font-weight:700;color:#27ae60">69.0kg ✅ 目標達成（71kg → 69kg）</td></tr>
+      <tr><td>朝</td><td>VALXプロテイン バナナ味（116kcal/P21.2g）＋出汁茶漬け（ごはん120g）＋納豆1パック<span class="kcal-hint">約408kcal</span></td></tr>
+      <tr><td>昼</td><td>卵かけご飯（ごはん180g・卵1個）<span class="kcal-hint">約394kcal / P12g</span></td></tr>
+      <tr><td>夜</td><td>—（記録待ち）</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ===== サマリー ===== -->
+<div class="summary-card">
+  <h2>📊 記録サマリー（概算）</h2>
+  <div class="stats-grid">
+    <div class="stat">
+      <div class="label">記録日数</div>
+      <div class="value">15日</div>
+    </div>
+    <div class="stat">
+      <div class="label">平均摂取カロリー</div>
+      <div class="value" style="color:var(--green)">〜1,350 kcal</div>
+    </div>
+    <div class="stat">
+      <div class="label">運動実施日</div>
+      <div class="value">7日</div>
+    </div>
+    <div class="stat">
+      <div class="label">飲酒日</div>
+      <div class="value">4日</div>
+    </div>
+    <div class="stat">
+      <div class="label">目標カロリー達成</div>
+      <div class="value" style="color:var(--green)">11/15日</div>
+    </div>
+  </div>
+  <div class="legend" style="margin-top:16px">
+    <div class="legend-item"><div class="dot" style="background:var(--green)"></div>〜1,700 kcal（目標内）</div>
+    <div class="legend-item"><div class="dot" style="background:var(--yellow)"></div>記録不完全（夜未記録等）</div>
+    <div class="legend-item"><div class="dot" style="background:var(--red)"></div>1,700+ kcal超過</div>
+  </div>
+  <p style="margin-top:14px;font-size:12px;color:var(--gray)">
+    ⚠️ カロリーはすべて概算です。外食・居酒屋の料理は実際の量・調理法により±200〜400kcalの誤差があります。
+  </p>
+</div>
+
+<!-- ===== 記録テンプレート ===== -->
+<div class="template-card">
+  <h2>📝 今後の記録方法</h2>
+  <p style="font-size:13px;color:#adb5bd;margin-bottom:12px">
+    このチャットに以下のように書くと自動的に追記します 👇
+  </p>
+  <pre>今日の食事
+朝: 〇〇
+昼: 〇〇
+間食: 〇〇
+夜: 〇〇
+運動: 〇〇
+体重: 〇〇kg</pre>
+</div>
+
+</main>
+
+<script>
+function toggle(el) {
+  el.classList.toggle('open');
+}
+// 最新日をデフォルト展開
+document.querySelectorAll('.day-card').forEach(c => {
+  if (c.querySelector('.day').textContent === '19') c.classList.add('open');
+});
+</script>
+</body>
+</html>
