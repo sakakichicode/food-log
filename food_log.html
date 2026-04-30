@@ -173,7 +173,7 @@
 <script>
 (function(){
   const labels = ['4/04','4/05','4/06','4/07','4/08','4/09','4/10','4/11','4/12','4/13','4/14','4/15','4/16','4/17','4/18','4/19','4/20','4/21','4/22','4/23','4/24','4/25','4/26','4/27','4/28','4/29','4/30'];
-  const values = [1020, null, 1540, 1200, 970, 950, 1390, 1940, 1000, 1520, 1690, 1430, 1060, 1220, 1100, 1045, 1630, 1470, 1430, 1850, 1650, 1690, 980, 899, null, 1320, null];
+  const values = [1020, null, 1540, 1200, 970, 950, 1390, 1940, 1000, 1520, 1690, 1430, 1060, 1220, 1100, 1045, 1630, 1470, 1430, 1850, 1650, 1690, 980, 899, null, 1320, 665];
   const bgColors = values.map(v =>
     v === null ? 'rgba(149,165,166,0.4)' : v > 1700 ? 'rgba(231,76,60,0.75)' : 'rgba(46,204,113,0.75)'
   );
@@ -1094,21 +1094,21 @@
       <div class="dow">THU</div><div class="day">30</div><div class="mon">APR</div>
     </div>
     <div class="day-summary">
-      <div class="meal-preview">記録待ち</div>
+      <div class="meal-preview">昼: スープストック キーマカレー＋サラダスープ　夜: 記録待ち</div>
       <div class="tags"><span class="tag" style="background:#e8f8f5;color:#1e8449;">TODAY</span><span class="tag weight" style="background:#d4efdf;color:#1e8449;font-weight:700">⬇️ 68.6kg</span></div>
     </div>
     <div class="kcal-block">
-      <div class="kcal-num" style="color:var(--gray)">—</div>
-      <div class="kcal-label">記録待ち</div>
-      <div class="kcal-bar-wrap"><div class="kcal-bar" style="width:0%"></div></div>
+      <div class="kcal-num kcal-green">〜665+<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">推定（夜待ち）</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-green" style="width:35%"></div></div>
     </div>
     <span class="stars">記録中</span>
   </div>
   <div class="day-detail">
     <table class="meal-table">
       <tr><td>体重</td><td style="font-weight:700;color:#27ae60">68.6kg（リコンプフェーズ順調）</td></tr>
-      <tr><td>朝</td><td>—（記録待ち）</td></tr>
-      <tr><td>昼</td><td>—（記録待ち）</td></tr>
+      <tr><td>朝</td><td>—</td></tr>
+      <tr><td>昼</td><td>筍と豚肉のハーブキーマカレー（591kcal/P12.7g）＋8種の野菜と鶏肉のサラダスープS（74kcal/P7.2g）<span class="kcal-hint">計665kcal / P19.9g</span></td></tr>
       <tr><td>夜</td><td>—（記録待ち）</td></tr>
     </table>
   </div>
