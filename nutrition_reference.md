@@ -12,6 +12,7 @@
 | 食品名 | kcal | タンパク質 | 備考 | URL |
 |---|---|---|---|---|
 | 国産鶏むね肉のサラダ | 206 | 23.1g | ✅ MCTオイル入り和風オニオンソース付 | [公式](https://www.lawson.co.jp/recommend/original/detail/1505308_1996.html) |
+| サラダチキンスティック スモーク（60g） | 70 | 11.5g | ✅ | [公式](https://www.lawson.co.jp/recommend/original/detail/1390762_1996.html) |
 | 胡麻さけおにぎり | 183 | 5.1g | ✅ だし炊きごはん | [公式](https://www.lawson.co.jp/recommend/original/detail/1506446_1996.html) |
 | 果実を味わうフルーツ&ナッツ（41g） | 192 | 4.5g | ✅ | [公式](https://www.lawson.co.jp/recommend/original/detail/1465258_1996.html) |
 
