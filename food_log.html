@@ -172,8 +172,8 @@
 </div>
 <script>
 (function(){
-  const labels = ['4/04','4/05','4/06','4/07','4/08','4/09','4/10','4/11','4/12','4/13','4/14','4/15','4/16','4/17','4/18','4/19','4/20','4/21','4/22','4/23','4/24','4/25','4/26','4/27','4/28','4/29','4/30'];
-  const values = [1020, null, 1540, 1200, 970, 950, 1390, 1940, 1000, 1520, 1690, 1430, 1060, 1220, 1100, 1045, 1630, 1470, 1430, 1850, 1650, 1690, 980, 899, null, 1320, 1815];
+  const labels = ['4/04','4/05','4/06','4/07','4/08','4/09','4/10','4/11','4/12','4/13','4/14','4/15','4/16','4/17','4/18','4/19','4/20','4/21','4/22','4/23','4/24','4/25','4/26','4/27','4/28','4/29','4/30','5/01'];
+  const values = [1020, null, 1540, 1200, 970, 950, 1390, 1940, 1000, 1520, 1690, 1430, 1060, 1220, 1100, 1045, 1630, 1470, 1430, 1850, 1650, 1690, 980, 899, null, 1320, 1815, 981];
   const bgColors = values.map(v =>
     v === null ? 'rgba(149,165,166,0.4)' : v > 1700 ? 'rgba(231,76,60,0.75)' : 'rgba(46,204,113,0.75)'
   );
@@ -239,8 +239,8 @@
 </div>
 <script>
 (function(){
-  const labels = ['4/04','4/05','4/06','4/07','4/08','4/09','4/10','4/11','4/12','4/13','4/14','4/15','4/16','4/17','4/18','4/19','4/20','4/21','4/22','4/23','4/24','4/25','4/26','4/27','4/28','4/29','4/30'];
-  const weights = [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,70.0,70.4,null,null,null,null,70.4,null,null,69.4,69.0,68.6];
+  const labels = ['4/04','4/05','4/06','4/07','4/08','4/09','4/10','4/11','4/12','4/13','4/14','4/15','4/16','4/17','4/18','4/19','4/20','4/21','4/22','4/23','4/24','4/25','4/26','4/27','4/28','4/29','4/30','5/01'];
+  const weights = [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,70.0,70.4,null,null,null,null,70.4,null,null,69.4,69.0,68.6,68.8];
   const target = new Array(labels.length).fill(69.0);
 
   new Chart(document.getElementById('weightChart'), {
@@ -1095,7 +1095,7 @@
     </div>
     <div class="day-summary">
       <div class="meal-preview">朝: 卵かけご飯＋納豆　昼: スープストック　夜: 豚丼＋オイコスドリンク＋プロテイン</div>
-      <div class="tags"><span class="tag weight" style="background:#d4efdf;color:#1e8449;font-weight:700">⬇️ 68.6kg</span></div>
+      <div class="tags"><span class="tag weight" style="background:#d4efdf;color:#1e8449;font-weight:700">⬇️ 68.6kg</span><span class="tag" style="background:#eaf4fb;color:#2471a3;">🧗 ボルダリング1.5h</span></div>
     </div>
     <div class="kcal-block">
       <div class="kcal-num kcal-green">〜1,815<small style="font-size:11px">kcal</small></div>
@@ -1110,6 +1110,36 @@
       <tr><td>朝</td><td>卵かけご飯（ごはん110g・卵1個）＋納豆＋味噌汁<span class="kcal-hint">〜396kcal / P〜18.6g</span></td></tr>
       <tr><td>昼</td><td>筍と豚肉のハーブキーマカレー（591kcal/P12.7g）＋8種の野菜と鶏肉のサラダスープS（74kcal/P7.2g）<span class="kcal-hint">計665kcal / P19.9g</span></td></tr>
       <tr><td>夜</td><td>豚丼（小）＋オイコスドリンク バニラ（138kcal/P25g）＋VALXプロテイン（116kcal/P21.2g）<span class="kcal-hint">〜754kcal / P〜66.2g</span></td></tr>
+      <tr><td>運動</td><td>ボルダリング（1.5時間）</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 5/01 -->
+<div class="day-card open" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">FRI</div><div class="day">01</div><div class="mon">MAY</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">朝: 出汁茶漬け＋目玉焼き　昼: 出汁茶漬け　夜: 鶏ひき肉スープ</div>
+      <div class="tags"><span class="tag" style="background:#e8f8f5;color:#1e8449;">TODAY</span><span class="tag weight" style="background:#d4efdf;color:#1e8449;font-weight:700">68.8kg</span></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num kcal-green">〜981<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">P約58g</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-green" style="width:52%"></div></div>
+    </div>
+    <span class="stars">─</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>体重</td><td style="font-weight:700;color:#27ae60">68.8kg</td></tr>
+      <tr><td>朝</td><td>出汁茶漬け（ごはん110g）＋目玉焼き<span class="kcal-hint">〜285kcal / P〜10.2g</span></td></tr>
+      <tr><td>昼</td><td>出汁茶漬け（ごはん110g）<span class="kcal-hint">〜185kcal / P〜2.8g</span></td></tr>
+      <tr><td>間食</td><td>プロテインバー<span class="kcal-hint">181kcal / P16g</span></td></tr>
+      <tr><td>夜</td><td>鶏ひき肉のスープ<span class="kcal-hint">〜330kcal / P〜28.9g</span></td></tr>
+      <tr><td>運動</td><td>なし</td></tr>
     </table>
   </div>
 </div>
