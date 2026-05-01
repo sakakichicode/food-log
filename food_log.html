@@ -175,10 +175,11 @@
   const labels = ['4/04','4/05','4/06','4/07','4/08','4/09','4/10','4/11','4/12','4/13','4/14','4/15','4/16','4/17','4/18','4/19','4/20','4/21','4/22','4/23','4/24','4/25','4/26','4/27','4/28','4/29','4/30','5/01','5/02'];
   const values = [1020, null, 1540, 1200, 970, 950, 1390, 1940, 1000, 1520, 1690, 1430, 1060, 1220, 1100, 1045, 1630, 1470, 1430, 1850, 1650, 1690, 980, 899, 1456, 1320, 1815, 1167, null];
   const burnValues = [2325,2703,2535,2272,2564,2432,3297,2229,2450,2174,2140,2478,2471,2048,2273,2341,2158,2258,2262,2305,2706,2290,2464,2210,2187,2152,2404,2146,null];
-  const bgColors = values.map(v =>
-    v === null ? 'rgba(149,165,166,0.4)' : v > 1700 ? 'rgba(231,76,60,0.75)' : 'rgba(46,204,113,0.75)'
+  // 4/04〜4/28: 減量フェーズ1700kcal / 4/29〜: リコンプフェーズ1900kcal
+  const targets = labels.map(l => ['4/29','4/30','5/01','5/02'].includes(l) ? 1900 : 1700);
+  const bgColors = values.map((v, i) =>
+    v === null ? 'rgba(149,165,166,0.4)' : v > targets[i] ? 'rgba(231,76,60,0.75)' : 'rgba(46,204,113,0.75)'
   );
-  const target = new Array(labels.length).fill(1700);
 
   new Chart(document.getElementById('kcalChart'), {
     data: {
@@ -207,8 +208,8 @@
         },
         {
           type: 'line',
-          label: '摂取目標 1,700kcal',
-          data: target,
+          label: '摂取目標（〜4/28: 1,700 / 4/29〜: 1,900kcal）',
+          data: targets,
           borderColor: '#f39c12',
           borderWidth: 1.5,
           borderDash: [6,3],
@@ -232,7 +233,7 @@
                 return ctx.raw !== null ? '摂取: ' + ctx.raw.toLocaleString() + ' kcal' : '摂取: 記録なし';
               if (ctx.dataset.label === '消費カロリー')
                 return '消費: ' + ctx.raw.toLocaleString() + ' kcal';
-              return '目標: 1,700 kcal';
+              return '目標: ' + ctx.raw.toLocaleString() + ' kcal';
             }
           }
         }
