@@ -172,11 +172,11 @@
 </div>
 <script>
 (function(){
-  const labels = ['4/04','4/05','4/06','4/07','4/08','4/09','4/10','4/11','4/12','4/13','4/14','4/15','4/16','4/17','4/18','4/19','4/20','4/21','4/22','4/23','4/24','4/25','4/26','4/27','4/28','4/29','4/30','5/01','5/02','5/03'];
-  const values = [1020, null, 1540, 1200, 970, 950, 1390, 1940, 1000, 1520, 1690, 1430, 1060, 1220, 1100, 1045, 1630, 1470, 1430, 1850, 1650, 1690, 980, 899, 1456, 1320, 1815, 1167, 1286, 1285];
-  const burnValues = [2325,2703,2535,2272,2564,2432,3297,2229,2450,2174,2140,2478,2471,2048,2273,2341,2158,2258,2262,2305,2706,2290,2464,2210,2187,2152,2404,2146,null,null];
+  const labels = ['4/04','4/05','4/06','4/07','4/08','4/09','4/10','4/11','4/12','4/13','4/14','4/15','4/16','4/17','4/18','4/19','4/20','4/21','4/22','4/23','4/24','4/25','4/26','4/27','4/28','4/29','4/30','5/01','5/02','5/03','5/04'];
+  const values = [1020, null, 1540, 1200, 970, 950, 1390, 1940, 1000, 1520, 1690, 1430, 1060, 1220, 1100, 1045, 1630, 1470, 1430, 1850, 1650, 1690, 980, 899, 1456, 1320, 1815, 1167, 1286, 1765, null];
+  const burnValues = [2325,2703,2535,2272,2564,2432,3297,2229,2450,2174,2140,2478,2471,2048,2273,2341,2158,2258,2262,2305,2706,2290,2464,2210,2187,2152,2404,2146,null,null,null];
   // 4/04〜4/28: 減量フェーズ1700kcal / 4/29〜: リコンプフェーズ1900kcal
-  const targets = labels.map(l => ['4/29','4/30','5/01','5/02','5/03'].includes(l) ? 1900 : 1700);
+  const targets = labels.map(l => { const [m,d] = l.split('/').map(Number); return (m>4||(m===4&&d>=29)) ? 1900 : 1700; });
   const bgColors = values.map((v, i) =>
     v === null ? 'rgba(149,165,166,0.4)' : v > targets[i] ? 'rgba(231,76,60,0.75)' : 'rgba(46,204,113,0.75)'
   );
@@ -258,8 +258,8 @@
 </div>
 <script>
 (function(){
-  const labels = ['4/04','4/05','4/06','4/07','4/08','4/09','4/10','4/11','4/12','4/13','4/14','4/15','4/16','4/17','4/18','4/19','4/20','4/21','4/22','4/23','4/24','4/25','4/26','4/27','4/28','4/29','4/30','5/01','5/02','5/03'];
-  const weights = [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,70.0,70.4,null,null,null,null,70.4,null,null,69.4,69.0,68.6,68.8,68.6,68.6];
+  const labels = ['4/04','4/05','4/06','4/07','4/08','4/09','4/10','4/11','4/12','4/13','4/14','4/15','4/16','4/17','4/18','4/19','4/20','4/21','4/22','4/23','4/24','4/25','4/26','4/27','4/28','4/29','4/30','5/01','5/02','5/03','5/04'];
+  const weights = [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,70.0,70.4,null,null,null,null,70.4,null,null,69.4,69.0,68.6,68.8,68.6,68.6,68.4];
   const target = new Array(labels.length).fill(69.0);
 
   new Chart(document.getElementById('weightChart'), {
@@ -1191,27 +1191,55 @@
 </div>
 
 <!-- 5/03 -->
-<div class="day-card open" onclick="toggle(this)">
+<div class="day-card" onclick="toggle(this)">
   <div class="day-header">
     <div class="date-box">
       <div class="dow">SUN</div><div class="day">03</div><div class="mon">MAY</div>
     </div>
     <div class="day-summary">
-      <div class="meal-preview">朝: トリマヨ＋ご飯＋卵＋キムチ　昼: からやま ねぎおろしからあげ定食　夜: 記録待ち</div>
-      <div class="tags"><span class="tag" style="background:#e8f8f5;color:#1e8449;">TODAY</span><span class="tag weight" style="background:#d4efdf;color:#1e8449;font-weight:700">68.6kg</span></div>
+      <div class="meal-preview">朝: トリマヨ＋ご飯＋卵＋キムチ　昼: からやま ねぎおろしからあげ定食　夜: 参鶏湯＋どら焼き</div>
+      <div class="tags"><span class="tag weight" style="background:#d4efdf;color:#1e8449;font-weight:700">68.6kg</span><span class="tag" style="background:#e8f8f5;color:#1e8449;">⭐⭐⭐</span></div>
     </div>
     <div class="kcal-block">
-      <div class="kcal-num kcal-green">〜1,285+<small style="font-size:11px">kcal</small></div>
-      <div class="kcal-label">P約63g（夜待ち）</div>
-      <div class="kcal-bar-wrap"><div class="kcal-bar bar-green" style="width:68%"></div></div>
+      <div class="kcal-num kcal-green">1,765<small style="font-size:11px">kcal</small></div>
+      <div class="kcal-label">P約91.7g / 目標1,900</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar bar-green" style="width:93%"></div></div>
+    </div>
+    <span class="stars">⭐⭐⭐</span>
+  </div>
+  <div class="day-detail">
+    <table class="meal-table">
+      <tr><td>体重</td><td style="font-weight:700;color:#27ae60">68.6kg</td></tr>
+      <tr><td>運動</td><td>腕立て30回</td></tr>
+      <tr><td>朝</td><td>トリマヨ残り（鶏むね70g）＋ご飯160g＋卵＋キムチ＋韓国海苔<span class="kcal-hint">〜535kcal / P〜30g</span></td></tr>
+      <tr><td>昼</td><td>からやま：ねぎおろしからあげ定食 もも4個<span class="kcal-hint">〜750kcal / P〜33g</span></td></tr>
+      <tr><td>夜</td><td>参鶏湯（サムゲタン）＋どら焼き<span class="kcal-hint">480kcal / P28.7g</span></td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 5/04 -->
+<div class="day-card open" onclick="toggle(this)">
+  <div class="day-header">
+    <div class="date-box">
+      <div class="dow">MON</div><div class="day">04</div><div class="mon">MAY</div>
+    </div>
+    <div class="day-summary">
+      <div class="meal-preview">食事記録待ち</div>
+      <div class="tags"><span class="tag" style="background:#e8f8f5;color:#1e8449;">TODAY</span><span class="tag weight" style="background:#d4efdf;color:#1e8449;font-weight:700">68.4kg</span></div>
+    </div>
+    <div class="kcal-block">
+      <div class="kcal-num" style="color:var(--gray)">—</div>
+      <div class="kcal-label">記録中</div>
+      <div class="kcal-bar-wrap"><div class="kcal-bar" style="width:0%;background:var(--gray)"></div></div>
     </div>
     <span class="stars">記録中</span>
   </div>
   <div class="day-detail">
     <table class="meal-table">
-      <tr><td>体重</td><td style="font-weight:700;color:#27ae60">68.6kg</td></tr>
-      <tr><td>朝</td><td>トリマヨ残り（鶏むね70g）＋ご飯160g＋卵＋キムチ＋韓国海苔<span class="kcal-hint">〜535kcal / P〜30g</span></td></tr>
-      <tr><td>昼</td><td>からやま：ねぎおろしからあげ定食 もも4個<span class="kcal-hint">〜750kcal / P〜33g</span></td></tr>
+      <tr><td>体重</td><td style="font-weight:700;color:#27ae60">68.4kg</td></tr>
+      <tr><td>朝</td><td>—（記録待ち）</td></tr>
+      <tr><td>昼</td><td>—（記録待ち）</td></tr>
       <tr><td>夜</td><td>—（記録待ち）</td></tr>
     </table>
   </div>
